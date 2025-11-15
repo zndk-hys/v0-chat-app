@@ -15,8 +15,6 @@ export function useMessagesRealtime() {
 
     const setupRealtime = async () => {
       try {
-        console.log("[v0] Setting up realtime subscription...")
-        
         const { data, error: fetchError } = await supabase
           .from('messages')
           .select('*')
@@ -24,8 +22,6 @@ export function useMessagesRealtime() {
           .limit(100)
 
         if (fetchError) throw fetchError
-        
-        console.log("[v0] Initial messages loaded:", data?.length)
 
         setMessages(data as Message[])
         setIsLoading(false)
@@ -40,7 +36,6 @@ export function useMessagesRealtime() {
               table: 'messages',
             },
             (payload: any) => {
-              console.log("[v0] New message received:", payload.new)
               setMessages((prev) => [...prev, payload.new as Message])
             }
           )
@@ -52,15 +47,12 @@ export function useMessagesRealtime() {
               table: 'messages',
             },
             (payload: any) => {
-              console.log("[v0] Message deleted:", payload.old.id)
               setMessages((prev) =>
                 prev.filter((msg) => msg.id !== payload.old.id)
               )
             }
           )
-          .subscribe((status: string) => {
-            console.log("[v0] Subscription status:", status)
-          })
+          .subscribe()
       } catch (err) {
         console.error('[v0] Failed to setup realtime:', err)
         setError(err instanceof Error ? err.message : 'Unknown error')
