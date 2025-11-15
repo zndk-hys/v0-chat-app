@@ -1,31 +1,15 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import useSWR from 'swr'
 import { getSupabaseClient } from '@/lib/supabase/client'
 import { ChatInterface } from '@/components/chat-interface'
 import { MessageInput } from '@/components/message-input'
-import { Message } from '@/lib/chat-utils'
-
-const fetcher = async () => {
-  const supabase = getSupabaseClient()
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .order('created_at', { ascending: true })
-    .limit(100)
-
-  if (error) throw error
-  return data as Message[]
-}
+import { useMessagesRealtime } from '@/hooks/use-messages-realtime'
 
 export default function Page() {
   const [username, setUsername] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const { data: messages = [], mutate } = useSWR('messages', fetcher, {
-    refreshInterval: 1000,
-    revalidateOnFocus: false,
-  })
+  const { messages } = useMessagesRealtime()
 
   const handleSendMessage = useCallback(
     async (content: string) => {
@@ -40,16 +24,13 @@ export default function Page() {
         })
 
         if (error) throw error
-
-        // Revalidate messages after sending
-        await mutate()
       } catch (error) {
         console.error('Failed to send message:', error)
       } finally {
         setIsLoading(false)
       }
     },
-    [username, mutate]
+    [username]
   )
 
   return (
